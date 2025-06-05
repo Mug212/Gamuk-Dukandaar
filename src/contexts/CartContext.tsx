@@ -76,7 +76,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const formattedItems: CartItem[] = cartItems?.map(item => ({
         id: item.products.id,
         name: item.products.name,
-        price: parseFloat(item.products.price),
+        price: parseFloat(String(item.products.price)),  // Convert price to number safely
         image: item.products.image_url || '/placeholder.svg',
         quantity: item.quantity,
         sellerId: item.products.seller_id
