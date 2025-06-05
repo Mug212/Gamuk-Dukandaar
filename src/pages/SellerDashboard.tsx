@@ -9,9 +9,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Package, TrendingUp, Users, LogOut, Edit, Trash2 } from 'lucide-react';
+import { Plus, Package, TrendingUp, Users, LogOut, Edit, Trash2, Crown, CreditCard } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import EditProductDialog from '@/components/EditProductDialog';
+import SubscriptionPlanDialog from '@/components/SubscriptionPlanDialog';
 
 interface Product {
   id: string;
@@ -32,6 +34,7 @@ interface Order {
   total: number;
   status: 'pending' | 'confirmed' | 'delivered';
   date: string;
+  paymentMethod: 'cash_on_delivery' | 'upi' | 'online';
 }
 
 const SellerDashboard = () => {
@@ -41,6 +44,8 @@ const SellerDashboard = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [isSubscriptionOpen, setIsSubscriptionOpen] = useState(false);
+  const [currentPlan, setCurrentPlan] = useState<'free' | 'premium' | 'enterprise'>('free');
   const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'analytics'>('products');
 
   const [newProduct, setNewProduct] = useState({
@@ -52,7 +57,7 @@ const SellerDashboard = () => {
   });
 
   useEffect(() => {
-    // Mock data for seller
+    // Mock data for seller with UPI payment method
     const mockProducts: Product[] = [
       {
         id: '1',
@@ -84,7 +89,8 @@ const SellerDashboard = () => {
         quantity: 2,
         total: 300,
         status: 'pending',
-        date: '2024-01-15'
+        date: '2024-01-15',
+        paymentMethod: 'upi'
       },
       {
         id: '2',
@@ -93,7 +99,8 @@ const SellerDashboard = () => {
         quantity: 1,
         total: 350,
         status: 'confirmed',
-        date: '2024-01-14'
+        date: '2024-01-14',
+        paymentMethod: 'cash_on_delivery'
       }
     ];
 
@@ -112,6 +119,13 @@ const SellerDashboard = () => {
       return;
     }
 
+    // Check plan limits
+    if (currentPlan === 'free' && products.length >= 10) {
+      toast.error('Free plan allows maximum 10 products. Upgrade to add more!');
+      setIsSubscriptionOpen(true);
+      return;
+    }
+
     const product: Product = {
       id: Date.now().toString(),
       name: newProduct.name,
@@ -127,6 +141,15 @@ const SellerDashboard = () => {
     setNewProduct({ name: '', description: '', price: '', category: '', image: '' });
     setIsAddingProduct(false);
     toast.success('Product added successfully!');
+  };
+
+  const handleEditProduct = (product: Product) => {
+    setEditingProduct(product);
+  };
+
+  const handleSaveEditedProduct = (updatedProduct: Product) => {
+    setProducts(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));
+    setEditingProduct(null);
   };
 
   const handleDeleteProduct = (productId: string) => {
@@ -150,11 +173,28 @@ const SellerDashboard = () => {
     }
   };
 
+  const getPaymentMethodColor = (method: string) => {
+    switch (method) {
+      case 'upi': return 'bg-purple-100 text-purple-800';
+      case 'online': return 'bg-green-100 text-green-800';
+      case 'cash_on_delivery': return 'bg-orange-100 text-orange-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   const totalRevenue = orders
     .filter(order => order.status === 'delivered')
     .reduce((sum, order) => sum + order.total, 0);
 
   const pendingOrders = orders.filter(order => order.status === 'pending').length;
+
+  const getPlanColor = (plan: string) => {
+    switch (plan) {
+      case 'premium': return 'text-yellow-600';
+      case 'enterprise': return 'text-purple-600';
+      default: return 'text-gray-600';
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -164,12 +204,29 @@ const SellerDashboard = () => {
           <div className="flex justify-between items-center h-16">
             <div>
               <h1 className="text-xl font-bold text-gray-900">Seller Dashboard</h1>
-              <p className="text-sm text-gray-600">Welcome, {user?.name}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm text-gray-600">Welcome, {user?.name}</p>
+                <Badge variant="outline" className={getPlanColor(currentPlan)}>
+                  <Crown className="h-3 w-3 mr-1" />
+                  {currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)}
+                </Badge>
+              </div>
             </div>
-            <Button variant="ghost" size="sm" onClick={handleLogout}>
-              <LogOut className="h-5 w-5 mr-1" />
-              Logout
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setIsSubscriptionOpen(true)}
+                className="text-village-green border-village-green hover:bg-village-green hover:text-white"
+              >
+                <CreditCard className="h-4 w-4 mr-1" />
+                {currentPlan === 'free' ? 'Upgrade Plan' : 'Manage Plan'}
+              </Button>
+              <Button variant="ghost" size="sm" onClick={handleLogout}>
+                <LogOut className="h-5 w-5 mr-1" />
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -184,6 +241,11 @@ const SellerDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{products.length}</div>
+              {currentPlan === 'free' && (
+                <p className="text-xs text-muted-foreground">
+                  {products.length}/10 products used
+                </p>
+              )}
             </CardContent>
           </Card>
           <Card>
@@ -293,6 +355,8 @@ const SellerDashboard = () => {
                           <SelectItem value="grains">Grains</SelectItem>
                           <SelectItem value="dairy">Dairy</SelectItem>
                           <SelectItem value="spices">Spices</SelectItem>
+                          <SelectItem value="fruits">Fruits</SelectItem>
+                          <SelectItem value="snacks">Snacks</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -338,7 +402,12 @@ const SellerDashboard = () => {
                       <Badge variant="secondary">{product.category}</Badge>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="flex-1">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => handleEditProduct(product)}
+                      >
                         <Edit className="h-4 w-4 mr-1" />
                         Edit
                       </Button>
@@ -371,6 +440,12 @@ const SellerDashboard = () => {
                         <h3 className="font-semibold text-lg">{order.productName}</h3>
                         <p className="text-gray-600">Customer: {order.buyerName}</p>
                         <p className="text-sm text-gray-500">Order Date: {order.date}</p>
+                        <div className="flex gap-2 mt-2">
+                          <Badge className={getPaymentMethodColor(order.paymentMethod)}>
+                            {order.paymentMethod === 'cash_on_delivery' ? 'COD' : 
+                             order.paymentMethod === 'upi' ? 'UPI' : 'Online'}
+                          </Badge>
+                        </div>
                       </div>
                       <div className="text-right">
                         <p className="text-lg font-bold">₹{order.total}</p>
@@ -407,6 +482,24 @@ const SellerDashboard = () => {
           </div>
         )}
       </div>
+
+      {/* Edit Product Dialog */}
+      {editingProduct && (
+        <EditProductDialog
+          product={editingProduct}
+          isOpen={true}
+          onClose={() => setEditingProduct(null)}
+          onSave={handleSaveEditedProduct}
+        />
+      )}
+
+      {/* Subscription Plan Dialog */}
+      <SubscriptionPlanDialog
+        isOpen={isSubscriptionOpen}
+        onClose={() => setIsSubscriptionOpen(false)}
+        currentPlan={currentPlan}
+        onPlanChange={setCurrentPlan}
+      />
     </div>
   );
 };
