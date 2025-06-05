@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -30,49 +29,49 @@ const BuyerDashboard = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
 
   useEffect(() => {
-    // Mock products data
+    // Mock products data with proper UUID format
     const mockProducts: Product[] = [
       {
-        id: '1',
+        id: '550e8400-e29b-41d4-a716-446655440001',
         name: 'Fresh Vegetables Bundle',
         description: 'Fresh seasonal vegetables from local farms',
         price: 150,
         image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=300',
         category: 'vegetables',
-        sellerId: 'seller1',
+        sellerId: '550e8400-e29b-41d4-a716-446655440101',
         sellerName: 'Ram\'s Vegetable Shop',
         available: true
       },
       {
-        id: '2',
+        id: '550e8400-e29b-41d4-a716-446655440002',
         name: 'Rice (5kg)',
         description: 'Premium quality basmati rice',
         price: 400,
         image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=300',
         category: 'grains',
-        sellerId: 'seller2',
+        sellerId: '550e8400-e29b-41d4-a716-446655440102',
         sellerName: 'Shyam Grocery Store',
         available: true
       },
       {
-        id: '3',
+        id: '550e8400-e29b-41d4-a716-446655440003',
         name: 'Fresh Milk (1L)',
         description: 'Pure cow milk from local dairy',
         price: 60,
         image: 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=300',
         category: 'dairy',
-        sellerId: 'seller3',
+        sellerId: '550e8400-e29b-41d4-a716-446655440103',
         sellerName: 'Village Dairy',
         available: true
       },
       {
-        id: '4',
+        id: '550e8400-e29b-41d4-a716-446655440004',
         name: 'Wheat Flour (10kg)',
         description: 'Fresh ground wheat flour',
         price: 350,
         image: 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=300',
         category: 'grains',
-        sellerId: 'seller1',
+        sellerId: '550e8400-e29b-41d4-a716-446655440101',
         sellerName: 'Ram\'s Vegetable Shop',
         available: true
       }
